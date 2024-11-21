@@ -2,106 +2,83 @@
 const botonAgregar = document.getElementById("boton");
 const inputNombre = document.getElementById("task-title");
 const inputAsiento = document.querySelector("input[placeholder='Numero de asiento']");
-const inputFecha = document.getElementById("task-due-date");
-const tablaAsientos = document.querySelector("table:nth-of-type(2)"); // Selecciona la tabla del mapa de asientos
+const tablaAsientos = document.querySelector("table:nth-of-type(2)");
 
 // Array para almacenar las reservaciones
 let reservaciones = [];
 
-// Función para agregar una reservación
-function agregarReservacion() {
+// Función para agregar o editar una reservación
+const agregarReservacion = () => {
     const nombre = inputNombre.value.trim();
     const asiento = inputAsiento.value.trim();
-    
 
-    // Validación de campos
-    if (!nombre || !asiento ) {
-        alert("Por favor, completa todos los campos.");
-        return;
+    if (!nombre || !asiento) {
+        return alert("Por favor, completa todos los campos.");
     }
 
-    // Validar si el asiento ya está reservado
-    if (reservaciones.find(reserva => reserva.asiento === asiento)) {
-        alert(`El asiento ${asiento} ya está reservado.`);
-        return;
+    // Verifica si el asiento ya está reservado
+    const existente = reservaciones.find(r => r.asiento === asiento);
+
+    if (existente) {
+        existente.nombre = nombre; // Actualiza la reservación
+    } else {
+        reservaciones.push({ nombre, asiento }); // Crea una nueva
     }
 
-    // Agregar la reservación al array
-    reservaciones.push({ nombre, asiento });
-
-    // Actualizar el mapa de asientos
     actualizarMapa();
     limpiarFormulario();
-}
+};
 
 // Función para actualizar el mapa de asientos
-function actualizarMapa() {
-    // Limpiar estilos previos
+const actualizarMapa = () => {
     tablaAsientos.querySelectorAll("td").forEach(td => {
-        td.classList.remove("reservado");
-        td.innerHTML = td.dataset.asiento; // Restaura solo el número del asiento
+        td.className = "";
+        td.innerHTML = td.dataset.asiento; // Resetea al número del asiento
     });
 
-    // Aplicar estilos a los asientos reservados
-    reservaciones.forEach(reserva => {
-        const asientoElement = tablaAsientos.querySelector(`td[data-asiento="${reserva.asiento}"]`);
-        if (asientoElement) {
-            asientoElement.classList.add("reservado");
-            asientoElement.innerHTML = `
+    reservaciones.forEach(({ nombre, asiento }) => {
+        const td = tablaAsientos.querySelector(`td[data-asiento="${asiento}"]`);
+        if (td) {
+            td.className = "reservado";
+            td.innerHTML = `
                 <div>
-                    <p>${reserva.nombre}</p>
-                    <button class="editar" data-asiento="${reserva.asiento}">Editar</button>
-                    <button class="eliminar" data-asiento="${reserva.asiento}">Eliminar</button>
+                    <p>${nombre}</p>
+                    <button class="editar" data-asiento="${asiento}">Editar</button>
+                    <button class="eliminar" data-asiento="${asiento}">Eliminar</button>
                 </div>
             `;
         }
     });
-}
+};
 
 // Función para limpiar el formulario
-function limpiarFormulario() {
+const limpiarFormulario = () => {
     inputNombre.value = "";
     inputAsiento.value = "";
-    inputFecha.value = "";
-}
+};
 
-// Función para manejar clic en botones de editar/eliminar
-function manejarClicBoton(event) {
-    if (event.target.classList.contains("editar")) {
-        const asiento = event.target.dataset.asiento;
-        editarReservacion(asiento);
-    } else if (event.target.classList.contains("eliminar")) {
-        const asiento = event.target.dataset.asiento;
-        eliminarReservacion(asiento);
+// Maneja clics en botones de la tabla
+const manejarClicBoton = event => {
+    const { classList, dataset } = event.target;
+    const asiento = dataset.asiento;
+
+    if (classList.contains("editar")) {
+        const reserva = reservaciones.find(r => r.asiento === asiento);
+        if (reserva) {
+            inputNombre.value = reserva.nombre;
+            inputAsiento.value = reserva.asiento;
+        }
+    } else if (classList.contains("eliminar")) {
+        reservaciones = reservaciones.filter(r => r.asiento !== asiento);
+        actualizarMapa();
     }
-}
+};
 
-// Función para editar una reservación
-function editarReservacion(asiento) {
-    const reserva = reservaciones.find(r => r.asiento === asiento);
-    if (!reserva) return;
-
-    // Llenar el formulario con los datos de la reservación
-    inputNombre.value = reserva.nombre;
-    inputAsiento.value = reserva.asiento;
-    
-
-    // Eliminar la reservación actual del array
-    reservaciones = reservaciones.filter(r => r.asiento !== asiento);
-    actualizarMapa();
-}
-
-// Función para eliminar una reservación
-function eliminarReservacion(asiento) {
-    reservaciones = reservaciones.filter(r => r.asiento !== asiento);
-    actualizarMapa();
-}
+// Asigna identificadores únicos a los asientos
+tablaAsientos.querySelectorAll("td").forEach((td, index) => {
+    td.dataset.asiento = index + 1;
+});
 
 // Event Listeners
 botonAgregar.addEventListener("click", agregarReservacion);
 tablaAsientos.addEventListener("click", manejarClicBoton);
-
-// Asigna un atributo único a cada celda del asiento
-tablaAsientos.querySelectorAll("td").forEach((td, index) => {
-    td.dataset.asiento = index + 1;
-});
