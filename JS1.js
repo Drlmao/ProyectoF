@@ -32,8 +32,8 @@ const agregarReservacion = () => {
 // Función para actualizar el mapa de asientos
 const actualizarMapa = () => {
     tablaAsientos.querySelectorAll("td").forEach(td => {
-        td.className = "";
-        td.innerHTML = td.dataset.asiento; // Resetea al número del asiento
+        td.className = ""; // Quita cualquier clase aplicada
+        td.innerHTML = td.dataset.asiento; // Restaura el contenido al número del asiento
     });
 
     reservaciones.forEach(({ nombre, asiento }) => {
@@ -65,11 +65,21 @@ const manejarClicBoton = event => {
     if (classList.contains("editar")) {
         const reserva = reservaciones.find(r => r.asiento === asiento);
         if (reserva) {
+            // Llenar los campos del formulario con los datos actuales de la reserva
             inputNombre.value = reserva.nombre;
             inputAsiento.value = reserva.asiento;
+
+            // Remover la reserva del array
+            reservaciones = reservaciones.filter(r => r.asiento !== asiento);
+
+            // Actualizar el mapa para quitar el asiento previamente reservado
+            actualizarMapa();
         }
     } else if (classList.contains("eliminar")) {
+        // Eliminar la reserva del array
         reservaciones = reservaciones.filter(r => r.asiento !== asiento);
+
+        // Actualizar el mapa para reflejar los cambios
         actualizarMapa();
     }
 };
